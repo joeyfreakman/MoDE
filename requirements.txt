@@ -24,6 +24,6 @@ tqdm
 termcolor
 wandb
 einops_exts
-flash_attn==2.7.3
 git+https://github.com/openai/CLIP.git
 timm
+# flash_attn==2.7.3
