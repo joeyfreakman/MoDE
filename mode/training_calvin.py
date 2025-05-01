@@ -11,7 +11,6 @@ from pytorch_lightning import Callback, LightningModule, seed_everything, Traine
 from pytorch_lightning.callbacks import LearningRateMonitor
 from pytorch_lightning.utilities import rank_zero_only
 
-
 # This is for using the locally installed repo clone when using slurm
 sys.path.insert(0, Path(__file__).absolute().parents[1].as_posix())
 import mode.models.mode_agent as models_m
@@ -74,8 +73,16 @@ def train(cfg: DictConfig) -> None:
         # Initialize components
         log_rank_0(f"\nInitializing training for seed {cfg.seed}")
         datamodule = hydra.utils.instantiate(cfg.datamodule)
-        model = hydra.utils.instantiate(cfg.model) if get_last_checkpoint(Path.cwd()) is None else \
-               getattr(models_m, cfg.model["_target_"].split(".")[-1]).load_from_checkpoint(get_last_checkpoint(Path.cwd()).as_posix())
+
+        datamodule.setup()
+
+        # Get a batch from the train dataloader
+        train_loader = datamodule.train_dataloader()['lang']
+        batch = next(iter(train_loader))
+
+        model = hydra.utils.instantiate(cfg.model)
+        # model = hydra.utils.instantiate(cfg.model) if get_last_checkpoint(Path.cwd()) is None else \
+        #        getattr(models_m, cfg.model["_target_"].split(".")[-1]).load_from_checkpoint(get_last_checkpoint(Path.cwd()).as_posix())
         
         if "pretrain_chk" in cfg:
             initialize_pretrained_weights(model, cfg)
