@@ -4,9 +4,30 @@ from pathlib import Path
 import re
 from typing import Dict, Tuple
 
+import cv2
 import numpy as np
 from omegaconf import DictConfig, ListConfig, OmegaConf
 import torch
+from mode.utils.utils_with_calvin import (
+    keypoint_discovery,
+    deproject,
+    get_gripper_camera_view_matrix,
+    convert_rotation
+)
+
+from calvin_env.envs.play_table_env import get_env
+from mode.utils.utils_with_calvin import (
+    keypoint_discovery,
+    deproject,
+    get_gripper_camera_view_matrix,
+    convert_rotation
+)
+
+env = get_env("/home/david/Nips2025/MoDE/calvin/dataset/calvin_debug_dataset/training", show_gui=False)
+
+static_cam = env.cameras[0]
+gripper_cam = env.cameras[1]
+gripper_cam.viewMatrix = get_gripper_camera_view_matrix(gripper_cam)
 
 logger = logging.getLogger(__name__)
 
@@ -105,20 +126,35 @@ def process_depth(
             depth_img = np.expand_dims(depth_img, axis=0)
         return depth_img
 
-    depth_obs_keys = observation_space["depth_obs"]
-    seq_depth_obs_dict = {}
-    for _, depth_obs_key in enumerate(depth_obs_keys):
-        depth_ob = exp_dim(episode[depth_obs_key])
-        assert len(depth_ob.shape) == 3
-        if window_size == 0 and seq_idx == 0:  # single file loader
-            depth_ob_ = torch.from_numpy(depth_ob).float()
-        else:  # episode loader
-            depth_ob_ = torch.from_numpy(depth_ob[seq_idx : seq_idx + window_size]).float()
-        # we might have different transformations for the different cameras
-        if depth_obs_key in transforms:
-            depth_ob_ = transforms[depth_obs_key](depth_ob_)
-        seq_depth_obs_dict[depth_obs_key] = depth_ob_
-    # shape: N_depth_obs x(BxHxW)
+    depth_static = np.squeeze(episode['depth_static'])  # (200, 200)
+    depth_gripper = np.squeeze(episode['depth_gripper'])  # (84, 84)
+
+    depth_static = cv2.resize(depth_static, (224, 224), interpolation=cv2.INTER_NEAREST)
+    depth_gripper = cv2.resize(depth_gripper, (96, 96), interpolation=cv2.INTER_NEAREST)
+
+    static_pcd = deproject(
+        static_cam, depth_static,
+        homogeneous=False, sanity_check=False
+    ).transpose(1, 0)
+    static_pcd = np.reshape(
+        static_pcd, (depth_static.shape[0], depth_static.shape[1], 3)
+    )
+    gripper_pcd = deproject(
+        gripper_cam, depth_gripper,
+        homogeneous=False, sanity_check=False
+    ).transpose(1, 0)
+    gripper_pcd = np.reshape(
+        gripper_pcd, (depth_gripper.shape[0], depth_gripper.shape[1], 3)
+    )
+
+    static_pcd = torch.from_numpy(static_pcd).float().unsqueeze(0).permute(0, 3, 1, 2)
+    gripper_pcd = torch.from_numpy(gripper_pcd).float().unsqueeze(0).permute(0, 3, 1, 2)
+
+    seq_depth_obs_dict = {
+        'depth_static': static_pcd,
+        'depth_gripper': gripper_pcd
+    }
+
     return {"depth_obs": seq_depth_obs_dict}
 
 

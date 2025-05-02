@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="VcsDirectoryMappings">
+    <mapping directory="" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/LIBERO" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/calvin" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/calvin_env" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/calvin_env/tacto" vcs="Git" />
+  </component>
+</project>

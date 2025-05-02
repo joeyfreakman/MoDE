@@ -1,7 +1,7 @@
 defaults:
   - callbacks: calvin
   - datamodule: calvin
-  - model: mode_agent
+  - model: depth_agent
   - override hydra/job_logging: colorlog
   - override hydra/hydra_logging: colorlog
 
@@ -17,10 +17,10 @@ seed: 242
 device: 'cuda'
 batch_size: 64 # 38 # 128
 devices: 4
-act_dim: 7
+action_dim: 7
 proprio_dims: 7
 obs_dim: 512
-goal_dim: 512
+#goal_dim: 512
 obs_seq_len: 1
 act_seq_len: 10
 multistep: 10 #${act_seq_len}
@@ -31,6 +31,36 @@ rollout_lh_skip_epochs: 9
 num_workers: 12
 benchmark_name: calvin_abc # calvin_abcd
 use_extracted_rel_actions: true
+
+##########################################################################################
+# Common Parameters
+##########################################################################################
+n_embd: 512
+goal_dim: 512
+latent_dim: 768
+
+obs_tokens: 2 #${obs_seq_len}
+use_pos_emb: True
+num_sampling_steps: 10
+goal_conditioned: True
+goal_window_size: 1
+
+##########################################################################################
+# Transformer Parameters (encoder-decoder)
+##########################################################################################
+encoder_n_layer: 8
+decoder_n_layer: 6
+n_heads: 8
+
+##########################################################################################
+# xLSTM Parameters
+##########################################################################################
+xlstm_encoder_blocks: 4
+xlstm_encoder_vocab_size: 15
+xlstm_encoder_chunkwise_kernel: "parallel--native_autograd"   # "parallel--native_autograd" "chunkwise--native_autograd"
+xlstm_encoder_mode: "train"  # "train" "train_with_padding"
+xlstm_encoder_adaLN_zero: False
+xlstm_encoder_in_context_cond: False
 
 trainer:
   devices: ${devices}
@@ -48,10 +78,10 @@ logger:
   _target_: pytorch_lightning.loggers.WandbLogger
   save_dir: .
   name: logger
-  group: mode
+  group: calvin
   log_model: false
   project: ${benchmark_name}
-  entity: bennoq
+  entity: tiger_or_cat
   id: ???
 
 
