@@ -23,7 +23,8 @@ from mode.utils.utils_with_calvin import (
     convert_rotation
 )
 
-env = get_env("/home/david/Nips2025/MoDE/calvin/dataset/calvin_debug_dataset/training", show_gui=False)
+# env = get_env("/home/david/Nips2025/MoDE/calvin/dataset/calvin_debug_dataset/training", show_gui=False)
+env = get_env("/home/huang/david/MoDE/calvin/dataset/task_ABC_D/training", show_gui=False)
 
 static_cam = env.cameras[0]
 gripper_cam = env.cameras[1]
