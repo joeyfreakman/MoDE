@@ -94,7 +94,8 @@ def train(cfg: DictConfig) -> None:
             initialize_pretrained_weights(model, cfg)
 
         # Setup training
-        train_logger = setup_logger(cfg, model)
+        # train_logger = setup_logger(cfg, model)
+        train_logger = hydra.utils.instantiate(cfg.logger)
         callbacks = setup_callbacks(cfg.callbacks) + [LearningRateMonitor(logging_interval="step")]
 
         # Set unique working directory for each seed
