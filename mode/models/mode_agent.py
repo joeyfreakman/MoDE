@@ -37,7 +37,7 @@ def print_model_parameters(model):
             if submodule_params > 0:
                 print(f"{name} - Total Params: {submodule_params}")
 
-    
+
 class MoDEAgent(pl.LightningModule):
     """
     The lightning module used for training.
@@ -529,8 +529,8 @@ class MoDEAgent(pl.LightningModule):
         # 1. extract the revelant visual observations
         latent_goal = None
         # last images are the randomly sampled future goal images for models learned with image goals 
-        rgb_static = dataset_batch["rgb_obs"]['rgb_static'] # [:, :-1]
-        rgb_gripper = dataset_batch["rgb_obs"]['rgb_gripper'] #[:, :-1]
+        rgb_static = dataset_batch["depth_obs"]['depth_static'] # [:, :-1]
+        rgb_gripper = dataset_batch["depth_obs"]['depth_gripper'] #[:, :-1]
 
         if self.use_text_not_embedding:
             # latent_goal = self.language_goal(dataset_batch["lang_text"]).to(rgb_static.dtype)
@@ -596,8 +596,8 @@ class MoDEAgent(pl.LightningModule):
             self.need_precompute_experts_for_inference = False
         
 
-        rgb_static = obs["rgb_obs"]['rgb_static']
-        rgb_gripper = obs["rgb_obs"]['rgb_gripper']
+        rgb_static = obs["depth_obs"]['depth_static']
+        rgb_gripper = obs["depth_obs"]['depth_gripper']
 
         perceptual_emb = self.embed_visual_obs(rgb_static, rgb_gripper, latent_goal)
         
