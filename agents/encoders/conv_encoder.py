@@ -15,8 +15,8 @@ class Conv_pc(nn.Module):
     # For point clouds of each camera view, first 3 dimensions stand for xyz, other 3 dimensions stand for rgb
     def forward(self, x):
 
-        static_tokens = self.pc_static(x['rgb_static'])
-        gripper_tokens = self.pc_gripper(x['rgb_gripper'])
+        static_tokens = self.pc_static(x['pc_static'])
+        gripper_tokens = self.pc_gripper(x['pc_gripper'])
 
         cam_features = torch.stack([static_tokens, gripper_tokens], dim=1)
 
