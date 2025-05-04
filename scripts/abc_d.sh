@@ -1,4 +1,4 @@
-CUDA_VISIBLE_DEVICES=2 python run_calvin.py --config-name=config_calvin \
+CUDA_VISIBLE_DEVICES=0 python run_calvin.py --config-name=config_calvin \
             --multirun rollout_lh_skip_epochs=10 \
             batch_size=64 \
             devices=1 \

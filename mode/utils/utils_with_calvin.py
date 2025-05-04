@@ -245,6 +245,38 @@ def deproject(cam, depth_img, homogeneous=False, sanity_check=False):
     return world_pos
 
 
+def david_deproject(param_dict, depth_img):
+    """
+    Deprojects a pixel point to 3D coordinates
+    Args
+        point: tuple (u, v); pixel coordinates of point to deproject
+        depth_img: np.array; depth image used as reference to generate 3D coordinates
+        homogeneous: bool; if true it returns the 3D point in homogeneous coordinates,
+                     else returns the world coordinates (x, y, z) position
+    Output
+        (x, y, z): (3, npts) np.array; world coordinates of the deprojected point
+    """
+    h, w = depth_img.shape
+    u, v = np.meshgrid(np.arange(w), np.arange(h))
+    u, v = u.ravel(), v.ravel()
+
+    # Unproject to world coordinates
+    T_world_cam = np.linalg.inv(np.array(param_dict['viewMatrix']).reshape((4, 4)).T)
+    z = depth_img[v, u]
+    foc = param_dict['height'] / (2 * np.tan(np.deg2rad(param_dict['fov']) / 2))
+    x = (u - param_dict['width'] // 2) * z / foc
+    y = -(v - param_dict['height'] // 2) * z / foc
+    z = -z
+    ones = np.ones_like(z)
+
+    cam_pos = np.stack([x, y, z, ones], axis=0)
+    world_pos = T_world_cam @ cam_pos
+
+    world_pos = world_pos[:3]
+
+    return world_pos
+
+
 def convert_rotation(rot):
     """Convert Euler angles to Quarternion
     """
