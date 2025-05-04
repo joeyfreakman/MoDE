@@ -28,7 +28,7 @@ p_last_state: 0
 gen_img_res: 112
 max_epochs: 100
 rollout_lh_skip_epochs: 9
-num_workers: 12
+num_workers: 0
 benchmark_name: calvin_abc # calvin_abcd
 use_extracted_rel_actions: true
 
