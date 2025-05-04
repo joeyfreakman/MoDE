@@ -161,8 +161,8 @@ class BesoAgent(pl.LightningModule):
         obs_dict = {
             'rgb_static': einops.rearrange(dataset_batch["rgb_obs"]['rgb_static'], 'b t c h w -> (b t) c h w'),
             'rgb_gripper': einops.rearrange(dataset_batch["rgb_obs"]['rgb_gripper'], 'b t c h w -> (b t) c h w'),
-            'pc_static': einops.rearrange(dataset_batch["depth_obs"]['depth_static'], 'b t c h w -> (b t) c h w'),
-            'pc_gripper': einops.rearrange(dataset_batch["depth_obs"]['depth_gripper'], 'b t c h w -> (b t) c h w')
+            # 'pc_static': einops.rearrange(dataset_batch["depth_obs"]['depth_static'], 'b t c h w -> (b t) c h w'),
+            # 'pc_gripper': einops.rearrange(dataset_batch["depth_obs"]['depth_gripper'], 'b t c h w -> (b t) c h w')
         }
 
         if self.use_text_not_embedding:
@@ -510,8 +510,8 @@ class BesoAgent(pl.LightningModule):
         obs_dict = {
             'rgb_static': einops.rearrange(obs["rgb_obs"]['rgb_static'], 'b t c h w -> (b t) c h w'),
             'rgb_gripper': einops.rearrange(obs["rgb_obs"]['rgb_gripper'], 'b t c h w -> (b t) c h w'),
-            'pc_static': einops.rearrange(obs["depth_obs"]['depth_static'], 'b t c h w -> (b t) c h w'),
-            'pc_gripper': einops.rearrange(obs["depth_obs"]['depth_gripper'], 'b t c h w -> (b t) c h w')
+            # 'pc_static': einops.rearrange(obs["depth_obs"]['depth_static'], 'b t c h w -> (b t) c h w'),
+            # 'pc_gripper': einops.rearrange(obs["depth_obs"]['depth_gripper'], 'b t c h w -> (b t) c h w')
         }
 
         obs_dict['latent_goal'] = latent_goal

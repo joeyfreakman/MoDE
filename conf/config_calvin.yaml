@@ -1,7 +1,7 @@
 defaults:
   - callbacks: calvin
   - datamodule: calvin
-  - model: mode_agent
+  - model: depth_agent
   - override hydra/job_logging: colorlog
   - override hydra/hydra_logging: colorlog
 
