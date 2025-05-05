@@ -141,8 +141,6 @@ def process_rgb(
     # shape: N_rgb_obs x (BxCxHxW)
     return {"rgb_obs": seq_rgb_obs_dict}
 
-
-
 def process_depth(
     episode: Dict[str, np.ndarray],
     observation_space: DictConfig,
@@ -156,34 +154,64 @@ def process_depth(
             depth_img = np.expand_dims(depth_img, axis=0)
         return depth_img
 
-    depth_static = np.squeeze(episode['depth_static'])  # (200, 200)
-    depth_gripper = np.squeeze(episode['depth_gripper'])  # (84, 84)
-
-    depth_static = cv2.resize(depth_static, (224, 224), interpolation=cv2.INTER_NEAREST)
-    depth_gripper = cv2.resize(depth_gripper, (96, 96), interpolation=cv2.INTER_NEAREST)
-
-    static_pcd = david_deproject(
-        static_params, depth_static,
-    ).transpose(1, 0)
-    static_pcd = np.reshape(
-        static_pcd, (depth_static.shape[0], depth_static.shape[1], 3)
-    )
-    gripper_pcd = david_deproject(
-        gripper_params, depth_gripper,
-    ).transpose(1, 0)
-    gripper_pcd = np.reshape(
-        gripper_pcd, (depth_gripper.shape[0], depth_gripper.shape[1], 3)
-    )
-
-    static_pcd = torch.from_numpy(static_pcd).float().unsqueeze(0).permute(0, 3, 1, 2)
-    gripper_pcd = torch.from_numpy(gripper_pcd).float().unsqueeze(0).permute(0, 3, 1, 2)
-
-    seq_depth_obs_dict = {
-        'depth_static': static_pcd,
-        'depth_gripper': gripper_pcd
-    }
-
+    depth_obs_keys = observation_space["depth_obs"]
+    seq_depth_obs_dict = {}
+    for _, depth_obs_key in enumerate(depth_obs_keys):
+        depth_ob = exp_dim(episode[depth_obs_key])
+        assert len(depth_ob.shape) == 3
+        if window_size == 0 and seq_idx == 0:  # single file loader
+            depth_ob_ = torch.from_numpy(depth_ob).float()
+        else:  # episode loader
+            depth_ob_ = torch.from_numpy(depth_ob[seq_idx : seq_idx + window_size]).float()
+        # we might have different transformations for the different cameras
+        if depth_obs_key in transforms:
+            depth_ob_ = transforms[depth_obs_key](depth_ob_)
+        seq_depth_obs_dict[depth_obs_key] = depth_ob_
+    # shape: N_depth_obs x(BxHxW)
     return {"depth_obs": seq_depth_obs_dict}
+
+
+# def process_depth(
+#     episode: Dict[str, np.ndarray],
+#     observation_space: DictConfig,
+#     transforms: Dict,
+#     seq_idx: int = 0,
+#     window_size: int = 0,
+# ) -> Dict[str, Dict[str, torch.Tensor]]:
+#     # expand dims for single environment obs
+#     def exp_dim(depth_img):
+#         if len(depth_img.shape) != 3:
+#             depth_img = np.expand_dims(depth_img, axis=0)
+#         return depth_img
+#
+#     depth_static = np.squeeze(episode['depth_static'])  # (200, 200)
+#     depth_gripper = np.squeeze(episode['depth_gripper'])  # (84, 84)
+#
+#     depth_static = cv2.resize(depth_static, (224, 224), interpolation=cv2.INTER_NEAREST)
+#     depth_gripper = cv2.resize(depth_gripper, (96, 96), interpolation=cv2.INTER_NEAREST)
+#
+#     static_pcd = david_deproject(
+#         static_params, depth_static,
+#     ).transpose(1, 0)
+#     static_pcd = np.reshape(
+#         static_pcd, (depth_static.shape[0], depth_static.shape[1], 3)
+#     )
+#     gripper_pcd = david_deproject(
+#         gripper_params, depth_gripper,
+#     ).transpose(1, 0)
+#     gripper_pcd = np.reshape(
+#         gripper_pcd, (depth_gripper.shape[0], depth_gripper.shape[1], 3)
+#     )
+#
+#     static_pcd = torch.from_numpy(static_pcd).float().unsqueeze(0).permute(0, 3, 1, 2)
+#     gripper_pcd = torch.from_numpy(gripper_pcd).float().unsqueeze(0).permute(0, 3, 1, 2)
+#
+#     seq_depth_obs_dict = {
+#         'depth_static': static_pcd,
+#         'depth_gripper': gripper_pcd
+#     }
+#
+#     return {"depth_obs": seq_depth_obs_dict}
 
 
 def process_actions(
