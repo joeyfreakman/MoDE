@@ -1,9 +1,12 @@
 defaults:
   - callbacks: calvin
   - datamodule: calvin
-  - model: mode_agent
+  - model: depth_agent
   - override hydra/job_logging: colorlog
   - override hydra/hydra_logging: colorlog
+
+# cam_file: /home/huang/david/MoDE/mode/utils/cam_params.pkl
+cam_file: /home/david/Nips2025/MoDE/mode/utils/cam_params.pkl
 
 root_data_dir: /home/david/Nips2025/MoDE/calvin/dataset/calvin_debug_dataset
 #root_data_dir: /hkfs/work/workspace/scratch/ft4740-play3/data/task_ABC_D

@@ -55,3 +55,5 @@ sigma_sample_density_type: 'loglogistic'
 
 use_text_not_embedding: True
 ckpt_path: null
+
+cam_file: ${cam_file}

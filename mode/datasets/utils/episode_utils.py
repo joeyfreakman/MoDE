@@ -5,62 +5,11 @@ from pathlib import Path
 import re
 from typing import Dict, Tuple
 
-import cv2
 import numpy as np
 from omegaconf import DictConfig, ListConfig, OmegaConf
 import torch
-from mode.utils.utils_with_calvin import (
-    keypoint_discovery,
-    deproject,
-    get_gripper_camera_view_matrix,
-    convert_rotation
-)
-
-from calvin_env.envs.play_table_env import get_env
-from mode.utils.utils_with_calvin import (
-    keypoint_discovery,
-    deproject,
-    david_deproject,
-    get_gripper_camera_view_matrix,
-    convert_rotation
-)
-
-# env = get_env("/home/david/Nips2025/MoDE/calvin/dataset/calvin_debug_dataset/training", show_gui=False)
-# # env = get_env("/home/huang/david/MoDE/calvin/dataset/task_D_D/training", show_gui=False)
-# static_cam = env.cameras[0]
-# gripper_cam = env.cameras[1]
-# gripper_cam.viewMatrix = get_gripper_camera_view_matrix(gripper_cam)
-
-cam_file = '/home/huang/david/MoDE/mode/utils/cam_params.pkl'
-# cam_file = '/home/david/Nips2025/MoDE/mode/utils/cam_params.pkl'
-with open(cam_file, 'rb') as f:
-    cam_params = pickle.load(f)
-
-static_params = cam_params['static']
-gripper_params = cam_params['gripper']
-
-# static_params = {
-#     'viewMatrix': static_cam.viewMatrix,
-#     'fov': static_cam.fov,
-#     'height': static_cam.height,
-#     'width': static_cam.width,
-# }
-#
-# gripper_params = {
-#     'viewMatrix': gripper_cam.viewMatrix,
-#     'fov': gripper_cam.fov,
-#     'height': gripper_cam.height,
-#     'width': gripper_cam.width,
-# }
-#
-# env.__del__()
-#
-# cam_params = {'static': static_params, 'gripper': gripper_params}
-# with open('/home/david/Nips2025/MoDE/mode/utils/cam_params.pkl', 'wb') as f:
-#     pickle.dump(cam_params, f)
 
 logger = logging.getLogger(__name__)
-
 
 def process_state(
     episode: Dict[str, np.ndarray],

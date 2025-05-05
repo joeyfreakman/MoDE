@@ -1,5 +1,6 @@
 import logging
 import os
+import pickle
 from typing import Any, Dict, NamedTuple, Optional, Tuple
 from collections import deque
 
@@ -23,6 +24,13 @@ from mode.callbacks.ema import EMA
 
 logger = logging.getLogger(__name__)
 
+from calvin_env.envs.play_table_env import get_env
+from mode.utils.utils_with_calvin import (
+    keypoint_discovery,
+    deproject,
+    get_gripper_camera_view_matrix,
+    convert_rotation
+)
 
 class BesoAgent(pl.LightningModule):
     def __init__(
@@ -50,6 +58,7 @@ class BesoAgent(pl.LightningModule):
             if_robot_states: bool = False,
             use_text_not_embedding: bool = True,
             ckpt_path=None,
+            cam_file=None,
     ):
         super().__init__()
 
@@ -97,8 +106,45 @@ class BesoAgent(pl.LightningModule):
 
         self.lang_buffer = AdvancedLangEmbeddingBuffer(self.language_encoder, 10000)
 
+        if cam_file is not None:
+            with open(cam_file, 'rb') as f:
+                cam_params = pickle.load(f)
+
+            static_params = cam_params['static']
+            gripper_params = cam_params['gripper']
+
+        # Register static_params tensors as buffers
+        self.register_buffer('static_viewMatrix', torch.tensor(static_params['viewMatrix']).reshape(4, 4).float())
+        self.register_buffer('static_fov', torch.tensor(static_params['fov']).float())
+        self.register_buffer('static_height', torch.tensor(static_params['height']).float())
+        self.register_buffer('static_width', torch.tensor(static_params['width']).float())
+
+        # Register gripper_params tensors as buffers
+        self.register_buffer('gripper_viewMatrix', torch.tensor(gripper_params['viewMatrix']).reshape(4, 4).float())
+        self.register_buffer('gripper_fov', torch.tensor(gripper_params['fov']).float())
+        self.register_buffer('gripper_height', torch.tensor(gripper_params['height']).float())
+        self.register_buffer('gripper_width', torch.tensor(gripper_params['width']).float())
+
         if ckpt_path is not None:
             self.load_pretrained_model(ckpt_path)
+
+    @property
+    def static_params(self):
+        return {
+            'viewMatrix': self.static_viewMatrix,
+            'fov': self.static_fov,
+            'height': self.static_height,
+            'width': self.static_width
+        }
+
+    @property
+    def gripper_params(self):
+        return {
+            'viewMatrix': self.gripper_viewMatrix,
+            'fov': self.gripper_fov,
+            'height': self.gripper_height,
+            'width': self.gripper_width
+        }
 
     def configure_optimizers(self):
         """
@@ -150,6 +196,55 @@ class BesoAgent(pl.LightningModule):
         ]
         return optim_groups
 
+    # depth shape: B, H, W
+    def depth_to_points(self, depth_img, param_dict):
+        # Get device and dimensions
+        device = depth_img.device
+        batch_size, h, w = depth_img.shape
+
+        # Create mesh grid of pixel coordinates (shared across batch)
+        u, v = torch.meshgrid(
+            torch.arange(w, device=device),
+            torch.arange(h, device=device),
+            indexing='xy')
+
+        # Reshape for broadcasting with batch dimension
+        u = u.reshape(1, h, w).expand(batch_size, -1, -1)  # (batch, h, w)
+        v = v.reshape(1, h, w).expand(batch_size, -1, -1)  # (batch, h, w)
+
+        # Convert view matrix to torch tensor and get its inverse
+        T_world_cam = torch.inverse(param_dict['viewMatrix'].t())
+
+        # Calculate focal length from field of view
+        foc = param_dict['height'] / (2 * torch.tan(torch.deg2rad(param_dict['fov']) / 2))
+
+        # Get z values from depth image
+        z = depth_img  # (batch, h, w)
+
+        # Calculate x and y coordinates
+        x = (u - param_dict['width'] // 2) * z / foc  # (batch, h, w)
+        y = -(v - param_dict['height'] // 2) * z / foc  # (batch, h, w)
+        z = -z  # (batch, h, w)
+
+        # Reshape to (batch, h*w)
+        x = x.reshape(batch_size, -1)
+        y = y.reshape(batch_size, -1)
+        z = z.reshape(batch_size, -1)
+
+        # Create homogeneous coordinates
+        ones = torch.ones_like(z)
+
+        # Stack to form camera position tensor (batch, 4, h*w)
+        cam_pos = torch.stack([x, y, z, ones], dim=1)
+
+        # Transform each batch to world coordinates
+        world_pos = torch.bmm(T_world_cam.unsqueeze(0).expand(batch_size, -1, -1), cam_pos)
+
+        # Return only x, y, z coordinates
+        world_pos = world_pos[:, :3, :]  # (batch, 3, h*w)
+
+        return einops.rearrange(world_pos, 'b d (h w) -> b d h w', h=h, w=w)
+
     def compute_input_embeddings(self, dataset_batch):
         """
         Compute the required embeddings for the visual ones and the latent goal.
@@ -158,11 +253,21 @@ class BesoAgent(pl.LightningModule):
         latent_goal = None
         # last images are the randomly sampled future goal images for models learned with image goals
 
+        depth_static = einops.rearrange(dataset_batch["depth_obs"]['depth_static'], 'b t h w -> (b t) h w')
+        depth_gripper = einops.rearrange(dataset_batch["depth_obs"]['depth_gripper'], 'b t h w -> (b t) h w')
+
+        pc_static = self.depth_to_points(depth_static, self.static_params)
+        pc_gripper = self.depth_to_points(depth_gripper, self.gripper_params)
+
+        pcs = {'static': pc_static, 'gripper': pc_gripper}
+        with open("/home/david/Nips2025/pc.pkl", "wb") as f:
+            pickle.dump(pcs, f)
+
         obs_dict = {
             'rgb_static': einops.rearrange(dataset_batch["rgb_obs"]['rgb_static'], 'b t c h w -> (b t) c h w'),
             'rgb_gripper': einops.rearrange(dataset_batch["rgb_obs"]['rgb_gripper'], 'b t c h w -> (b t) c h w'),
-            'pc_static': einops.rearrange(dataset_batch["depth_obs"]['depth_static'], 'b t c h w -> (b t) c h w'),
-            'pc_gripper': einops.rearrange(dataset_batch["depth_obs"]['depth_gripper'], 'b t c h w -> (b t) c h w')
+            'pc_static': pc_static,
+            'pc_gripper': pc_gripper,
         }
 
         if self.use_text_not_embedding:
@@ -499,24 +604,10 @@ class BesoAgent(pl.LightningModule):
         """
         Method for doing inference with the model.
         """
-        if self.use_text_not_embedding:
-            # latent_goal = self.language_encoder(goal["lang_text"])
-            latent_goal = self.lang_buffer.get_goal_instruction_embeddings(goal["lang_text"])
-            latent_goal = latent_goal.to(torch.float32)
-        else:
-            latent_goal = self.language_encoder(goal["lang"]).unsqueeze(0).to(torch.float32).to(
-                obs["rgb_obs"]['rgb_static'].device)
 
-        obs_dict = {
-            'rgb_static': einops.rearrange(obs["rgb_obs"]['rgb_static'], 'b t c h w -> (b t) c h w'),
-            'rgb_gripper': einops.rearrange(obs["rgb_obs"]['rgb_gripper'], 'b t c h w -> (b t) c h w'),
-            'pc_static': einops.rearrange(obs["depth_obs"]['depth_static'], 'b t c h w -> (b t) c h w'),
-            'pc_gripper': einops.rearrange(obs["depth_obs"]['depth_gripper'], 'b t c h w -> (b t) c h w')
-        }
+        obs['lang_text'] = goal['lang_text']
 
-        obs_dict['latent_goal'] = latent_goal
-
-        perceptual_emb = self.img_encoder(obs_dict)
+        perceptual_emb, latent_goal = self.compute_input_embeddings(obs)
 
         act_seq = self.denoise_actions(
             perceptual_emb,
