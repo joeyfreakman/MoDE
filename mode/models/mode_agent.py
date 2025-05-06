@@ -22,7 +22,7 @@ from mode.models.perceptual_encoders.resnets import ResNetEncoderWithFiLM
 from mode.models.perceptual_encoders.pretrained_resnets import FiLMResNet34Policy, FiLMResNet50Policy
 from mode.models.networks.modedit import NoiseBlockMoE 
 from mode.utils.lang_buffer import AdvancedLangEmbeddingBuffer
-
+from timm import create_model
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +37,19 @@ def print_model_parameters(model):
             submodule_params = sum(p.numel() for p in submodule.parameters())
             if submodule_params > 0:
                 print(f"{name} - Total Params: {submodule_params}")
+
+
+class ConvNextv2(nn.Module):
+    def __init__(self, pretrained=True):
+        super(ConvNextv2, self).__init__()
+
+        self.convnext = create_model('convnextv2_tiny', pretrained=pretrained, num_classes=0)
+
+    def forward(self, x, lang=None):
+
+        x = self.convnext(x)
+
+        return x
 
 
 class MoDEAgent(pl.LightningModule):
@@ -89,8 +102,12 @@ class MoDEAgent(pl.LightningModule):
             ResNetClass = FiLMResNet50Policy
         else:
             raise ValueError(f"Unsupported ResNet type: {resnet_type}")
-        self.static_resnet = ResNetClass(cond_dim)
-        self.gripper_resnet = ResNetClass(cond_dim)
+        # self.static_resnet = ResNetClass(cond_dim)
+        # self.gripper_resnet = ResNetClass(cond_dim)
+
+        self.static_resnet = ConvNextv2(pretrained=False)
+        self.gripper_resnet = ConvNextv2(pretrained=False)
+
         self.use_perceiver = use_perceiver
         self.use_film_resnet = True
         self.use_text_not_embedding = use_text_not_embedding
