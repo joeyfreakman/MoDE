@@ -24,13 +24,6 @@ from mode.callbacks.ema import EMA
 
 logger = logging.getLogger(__name__)
 
-from calvin_env.envs.play_table_env import get_env
-from mode.utils.utils_with_calvin import (
-    keypoint_discovery,
-    deproject,
-    get_gripper_camera_view_matrix,
-    convert_rotation
-)
 
 class BesoAgent(pl.LightningModule):
     def __init__(
@@ -237,9 +230,9 @@ class BesoAgent(pl.LightningModule):
         pc_static = self.depth_to_points(depth_static, static_viewmatrix, self.static_fov)
         pc_gripper = self.depth_to_points(depth_gripper, gripper_viewmatrix, self.gripper_fov)
 
-        pcs = {'static': pc_static, 'gripper': pc_gripper}
-        with open("/home/david/Nips2025/pc.pkl", "wb") as f:
-            pickle.dump(pcs, f)
+        # pcs = {'static': pc_static, 'gripper': pc_gripper}
+        # with open("/home/david/Nips2025/pc.pkl", "wb") as f:
+        #     pickle.dump(pcs, f)
 
         obs_dict = {
             'rgb_static': einops.rearrange(dataset_batch["rgb_obs"]['rgb_static'], 'b t c h w -> (b t) c h w'),

@@ -1,5 +1,6 @@
 import logging
 import os
+import pickle
 from typing import Any, Dict, Optional, Tuple, List, DefaultDict
 from functools import partial
 import seaborn as sns
@@ -69,7 +70,8 @@ class MoDEAgent(pl.LightningModule):
         use_text_not_embedding: bool = True,
         use_proprio: bool = False,
         act_window_size: int = 10,
-        resnet_type: str = '18', 
+        resnet_type: str = '18',
+        cam_file=None,
     ):
         super(MoDEAgent, self).__init__()
         # Set obs_dim based on resnet_type
@@ -123,6 +125,18 @@ class MoDEAgent(pl.LightningModule):
         self.expert_analysis_complete = False
         self.finetuning_config = None
         self.frozen_expert_mask = None
+
+        if cam_file is not None:
+            with open(cam_file, 'rb') as f:
+                cam_params = pickle.load(f)
+
+            static_params = cam_params['static']
+            gripper_params = cam_params['gripper']
+
+        # Register static_params tensors as buffers
+        self.register_buffer('static_fov', torch.tensor(static_params['fov']).float())
+        # Register gripper_params tensors as buffers
+        self.register_buffer('gripper_fov', torch.tensor(gripper_params['fov']).float())
 
         if self.start_from_pretrained and ckpt_path is not None:
             self.load_pretrained_parameters(ckpt_path)
@@ -521,16 +535,74 @@ class MoDEAgent(pl.LightningModule):
         """
         self.log(f"val_act/{self.modality_scope}_act_loss_pp", pred_loss, sync_dist=True)
 
-      
+    # depth shape: B, H, W
+    def depth_to_points(self, depth_img, viewmatrix, fov):
+        # Get device and dimensions
+        device = depth_img.device
+        batch_size, h, w = depth_img.shape
+
+        # Create mesh grid of pixel coordinates (shared across batch)
+        u, v = torch.meshgrid(
+            torch.arange(w, device=device),
+            torch.arange(h, device=device),
+            indexing='xy')
+
+        # Reshape for broadcasting with batch dimension
+        u = u.reshape(1, h, w).expand(batch_size, -1, -1)  # (batch, h, w)
+        v = v.reshape(1, h, w).expand(batch_size, -1, -1)  # (batch, h, w)
+
+        # Convert view matrix to torch tensor and get its inverse
+        T_world_cam = torch.inverse(viewmatrix.transpose(1, 2))
+
+        # Calculate focal length from field of view
+        foc = h / (2 * torch.tan(torch.deg2rad(fov) / 2))
+
+        # Get z values from depth image
+        z = depth_img  # (batch, h, w)
+
+        # Calculate x and y coordinates
+        x = (u - w // 2) * z / foc  # (batch, h, w)
+        y = -(v - h // 2) * z / foc  # (batch, h, w)
+        z = -z  # (batch, h, w)
+
+        # Reshape to (batch, h*w)
+        x = x.reshape(batch_size, -1)
+        y = y.reshape(batch_size, -1)
+        z = z.reshape(batch_size, -1)
+
+        # Create homogeneous coordinates
+        ones = torch.ones_like(z)
+
+        # Stack to form camera position tensor (batch, 4, h*w)
+        cam_pos = torch.stack([x, y, z, ones], dim=1)
+
+        # Transform each batch to world coordinates
+        world_pos = torch.bmm(T_world_cam, cam_pos)
+
+        # Return only x, y, z coordinates
+        world_pos = world_pos[:, :3, :]  # (batch, 3, h*w)
+
+        return einops.rearrange(world_pos, 'b d (h w) -> b d h w', h=h, w=w)
+
     def compute_input_embeddings(self, dataset_batch):
         """
         Compute the required embeddings for the visual ones and the latent goal.
         """
         # 1. extract the revelant visual observations
         latent_goal = None
-        # last images are the randomly sampled future goal images for models learned with image goals 
-        rgb_static = dataset_batch["rgb_obs"]['rgb_static'] # [:, :-1]
-        rgb_gripper = dataset_batch["rgb_obs"]['rgb_gripper'] #[:, :-1]
+        # last images are the randomly sampled future goal images for models learned with image goals
+
+        depth_static = einops.rearrange(dataset_batch["depth_obs"]['depth_static'], 'b t h w -> (b t) h w')
+        depth_gripper = einops.rearrange(dataset_batch["depth_obs"]['depth_gripper'], 'b t h w -> (b t) h w')
+
+        static_viewmatrix = einops.rearrange(dataset_batch['depth_obs']['static_viewmatrix'], 'b t h w -> (b t) h w')
+        gripper_viewmatrix = einops.rearrange(dataset_batch['depth_obs']['gripper_viewmatrix'], 'b t h w -> (b t) h w')
+
+        rgb_static = self.depth_to_points(depth_static, static_viewmatrix, self.static_fov)
+        rgb_gripper = self.depth_to_points(depth_gripper, gripper_viewmatrix, self.gripper_fov)
+
+        # rgb_static = dataset_batch["rgb_obs"]['rgb_static'] # [:, :-1]
+        # rgb_gripper = dataset_batch["rgb_obs"]['rgb_gripper'] #[:, :-1]
 
         if self.use_text_not_embedding:
             # latent_goal = self.language_goal(dataset_batch["lang_text"]).to(rgb_static.dtype)
@@ -547,8 +619,8 @@ class MoDEAgent(pl.LightningModule):
     
     def embed_visual_obs(self, rgb_static, rgb_gripper, latent_goal):
         # reshape rgb_static and rgb_gripper
-        rgb_static = einops.rearrange(rgb_static, 'b t c h w -> (b t) c h w')
-        rgb_gripper = einops.rearrange(rgb_gripper, 'b t c h w -> (b t) c h w')
+        # rgb_static = einops.rearrange(rgb_static, 'b t c h w -> (b t) c h w')
+        # rgb_gripper = einops.rearrange(rgb_gripper, 'b t c h w -> (b t) c h w')
 
         if self.use_film_resnet:
             static_tokens = self.static_resnet(rgb_static, latent_goal)
@@ -594,10 +666,18 @@ class MoDEAgent(pl.LightningModule):
         if self.need_precompute_experts_for_inference:
             self.precompute_expert_for_inference(latent_goal)
             self.need_precompute_experts_for_inference = False
-        
 
-        rgb_static = obs["rgb_obs"]['rgb_static']
-        rgb_gripper = obs["rgb_obs"]['rgb_gripper']
+        depth_static = einops.rearrange(obs["depth_obs"]['depth_static'], 'b t h w -> (b t) h w')
+        depth_gripper = einops.rearrange(obs["depth_obs"]['depth_gripper'], 'b t h w -> (b t) h w')
+
+        static_viewmatrix = einops.rearrange(obs['depth_obs']['static_viewmatrix'], 'b t h w -> (b t) h w')
+        gripper_viewmatrix = einops.rearrange(obs['depth_obs']['gripper_viewmatrix'], 'b t h w -> (b t) h w')
+
+        rgb_static = self.depth_to_points(depth_static, static_viewmatrix, self.static_fov)
+        rgb_gripper = self.depth_to_points(depth_gripper, gripper_viewmatrix, self.gripper_fov)
+
+        # rgb_static = obs["rgb_obs"]['rgb_static']
+        # rgb_gripper = obs["rgb_obs"]['rgb_gripper']
 
         perceptual_emb = self.embed_visual_obs(rgb_static, rgb_gripper, latent_goal)
         

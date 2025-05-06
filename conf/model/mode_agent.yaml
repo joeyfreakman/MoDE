@@ -21,6 +21,8 @@ obs_enc_dim: ${obs_dim}
 cond_dim: 512
 resnet_type: '50'
 
+cam_file: ${cam_file}
+
 optimizer:
   _target_: torch.optim.AdamW
   transformer_weight_decay: 0.05
