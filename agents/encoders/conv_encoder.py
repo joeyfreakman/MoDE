@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torchvision
-from .pretrained_resnets import FiLMResNet18Policy
+from .pretrained_resnets import FiLMResNet50Policy
 from .convnext import ConvNextv2
 
 
@@ -9,8 +9,11 @@ class Conv_pc(nn.Module):
     def __init__(self,):
         super(Conv_pc, self).__init__()
 
-        self.pc_static = ConvNextv2(pretrained=False)
-        self.pc_gripper = ConvNextv2(pretrained=False)
+        # self.pc_static = ConvNextv2(pretrained=False)
+        # self.pc_gripper = ConvNextv2(pretrained=False)
+
+        self.pc_static = FiLMResNet50Policy(condition_dim=512, pretrained=False)
+        self.pc_gripper = FiLMResNet50Policy(condition_dim=512, pretrained=False)
 
     # For point clouds of each camera view, first 3 dimensions stand for xyz, other 3 dimensions stand for rgb
     def forward(self, x):
