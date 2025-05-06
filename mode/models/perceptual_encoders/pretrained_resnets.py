@@ -23,10 +23,10 @@ class FiLMLayer(nn.Module):
         return x.contiguous()
 
 class FiLMResNet50Policy(nn.Module):
-    def __init__(self, condition_dim):
+    def __init__(self, condition_dim, pretrained=True):
         super(FiLMResNet50Policy, self).__init__()
         # Load pretrained ResNet50 with weights from ImageNet-1K
-        self.resnet = create_model('resnet50', pretrained=True, num_classes=0)
+        self.resnet = create_model('resnet50', pretrained=pretrained, num_classes=0)
         
         # Add FiLM layers after each residual block
         self.film1 = FiLMLayer(256, condition_dim)

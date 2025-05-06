@@ -88,7 +88,7 @@ class MoDEAgent(pl.LightningModule):
     ):
         super(MoDEAgent, self).__init__()
         # Set obs_dim based on resnet_type
-        obs_dim = 768 if resnet_type == '50' else 512
+        obs_dim = 2048 if resnet_type == '50' else 512
         self.latent_dim = latent_dim
         model.inner_model.obs_dim = obs_dim
         self.model = hydra.utils.instantiate(model).to(self.device)
@@ -102,11 +102,11 @@ class MoDEAgent(pl.LightningModule):
             ResNetClass = FiLMResNet50Policy
         else:
             raise ValueError(f"Unsupported ResNet type: {resnet_type}")
-        # self.static_resnet = ResNetClass(cond_dim)
-        # self.gripper_resnet = ResNetClass(cond_dim)
+        self.static_resnet = ResNetClass(cond_dim, pretrained=False)
+        self.gripper_resnet = ResNetClass(cond_dim, pretrained=False)
 
-        self.static_resnet = ConvNextv2(pretrained=False)
-        self.gripper_resnet = ConvNextv2(pretrained=False)
+        # self.static_resnet = ConvNextv2(pretrained=False)
+        # self.gripper_resnet = ConvNextv2(pretrained=False)
 
         self.use_perceiver = use_perceiver
         self.use_film_resnet = True
