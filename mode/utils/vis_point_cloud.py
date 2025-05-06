@@ -19,5 +19,5 @@ points = np.concatenate((pc_static, pc_gripper), axis=1)
 for i in range(points.shape[0]):
 
     pcd = o3d.geometry.PointCloud()
-    pcd.points = o3d.utility.Vector3dVector(points[20])
+    pcd.points = o3d.utility.Vector3dVector(points[i+30])
     o3d.visualization.draw_geometries([pcd])

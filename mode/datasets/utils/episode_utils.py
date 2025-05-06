@@ -103,8 +103,17 @@ def process_depth(
             depth_img = np.expand_dims(depth_img, axis=0)
         return depth_img
 
+    gripper_viewmatrix = exp_dim(episode["gripper_viewmatrix"])
+    static_viewmatrix = exp_dim(episode["static_viewmatrix"])
+
+    gripper_viewmatrix = torch.from_numpy(gripper_viewmatrix).float()
+    static_viewmatrix = torch.from_numpy(static_viewmatrix).float()
+
     depth_obs_keys = observation_space["depth_obs"]
-    seq_depth_obs_dict = {}
+    seq_depth_obs_dict = {
+        'static_viewmatrix': static_viewmatrix,
+        'gripper_viewmatrix': gripper_viewmatrix,
+    }
     for _, depth_obs_key in enumerate(depth_obs_keys):
         depth_ob = exp_dim(episode[depth_obs_key])
         assert len(depth_ob.shape) == 3

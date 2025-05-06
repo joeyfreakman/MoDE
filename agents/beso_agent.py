@@ -114,37 +114,12 @@ class BesoAgent(pl.LightningModule):
             gripper_params = cam_params['gripper']
 
         # Register static_params tensors as buffers
-        self.register_buffer('static_viewMatrix', torch.tensor(static_params['viewMatrix']).reshape(4, 4).float())
         self.register_buffer('static_fov', torch.tensor(static_params['fov']).float())
-        self.register_buffer('static_height', torch.tensor(static_params['height']).float())
-        self.register_buffer('static_width', torch.tensor(static_params['width']).float())
-
         # Register gripper_params tensors as buffers
-        self.register_buffer('gripper_viewMatrix', torch.tensor(gripper_params['viewMatrix']).reshape(4, 4).float())
         self.register_buffer('gripper_fov', torch.tensor(gripper_params['fov']).float())
-        self.register_buffer('gripper_height', torch.tensor(gripper_params['height']).float())
-        self.register_buffer('gripper_width', torch.tensor(gripper_params['width']).float())
 
         if ckpt_path is not None:
             self.load_pretrained_model(ckpt_path)
-
-    @property
-    def static_params(self):
-        return {
-            'viewMatrix': self.static_viewMatrix,
-            'fov': self.static_fov,
-            'height': self.static_height,
-            'width': self.static_width
-        }
-
-    @property
-    def gripper_params(self):
-        return {
-            'viewMatrix': self.gripper_viewMatrix,
-            'fov': self.gripper_fov,
-            'height': self.gripper_height,
-            'width': self.gripper_width
-        }
 
     def configure_optimizers(self):
         """
@@ -197,7 +172,7 @@ class BesoAgent(pl.LightningModule):
         return optim_groups
 
     # depth shape: B, H, W
-    def depth_to_points(self, depth_img, param_dict):
+    def depth_to_points(self, depth_img, viewmatrix, fov):
         # Get device and dimensions
         device = depth_img.device
         batch_size, h, w = depth_img.shape
@@ -213,17 +188,17 @@ class BesoAgent(pl.LightningModule):
         v = v.reshape(1, h, w).expand(batch_size, -1, -1)  # (batch, h, w)
 
         # Convert view matrix to torch tensor and get its inverse
-        T_world_cam = torch.inverse(param_dict['viewMatrix'].t())
+        T_world_cam = torch.inverse(viewmatrix.transpose(1, 2))
 
         # Calculate focal length from field of view
-        foc = param_dict['height'] / (2 * torch.tan(torch.deg2rad(param_dict['fov']) / 2))
+        foc = h / (2 * torch.tan(torch.deg2rad(fov) / 2))
 
         # Get z values from depth image
         z = depth_img  # (batch, h, w)
 
         # Calculate x and y coordinates
-        x = (u - param_dict['width'] // 2) * z / foc  # (batch, h, w)
-        y = -(v - param_dict['height'] // 2) * z / foc  # (batch, h, w)
+        x = (u - w // 2) * z / foc  # (batch, h, w)
+        y = -(v - h // 2) * z / foc  # (batch, h, w)
         z = -z  # (batch, h, w)
 
         # Reshape to (batch, h*w)
@@ -238,7 +213,7 @@ class BesoAgent(pl.LightningModule):
         cam_pos = torch.stack([x, y, z, ones], dim=1)
 
         # Transform each batch to world coordinates
-        world_pos = torch.bmm(T_world_cam.unsqueeze(0).expand(batch_size, -1, -1), cam_pos)
+        world_pos = torch.bmm(T_world_cam, cam_pos)
 
         # Return only x, y, z coordinates
         world_pos = world_pos[:, :3, :]  # (batch, 3, h*w)
@@ -256,8 +231,11 @@ class BesoAgent(pl.LightningModule):
         depth_static = einops.rearrange(dataset_batch["depth_obs"]['depth_static'], 'b t h w -> (b t) h w')
         depth_gripper = einops.rearrange(dataset_batch["depth_obs"]['depth_gripper'], 'b t h w -> (b t) h w')
 
-        pc_static = self.depth_to_points(depth_static, self.static_params)
-        pc_gripper = self.depth_to_points(depth_gripper, self.gripper_params)
+        static_viewmatrix = einops.rearrange(dataset_batch['depth_obs']['static_viewmatrix'], 'b t h w -> (b t) h w')
+        gripper_viewmatrix = einops.rearrange(dataset_batch['depth_obs']['gripper_viewmatrix'], 'b t h w -> (b t) h w')
+
+        pc_static = self.depth_to_points(depth_static, static_viewmatrix, self.static_fov)
+        pc_gripper = self.depth_to_points(depth_gripper, gripper_viewmatrix, self.gripper_fov)
 
         pcs = {'static': pc_static, 'gripper': pc_gripper}
         with open("/home/david/Nips2025/pc.pkl", "wb") as f:

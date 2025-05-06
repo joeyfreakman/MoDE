@@ -19,14 +19,14 @@ train:
     - _target_: torchvision.transforms.Normalize
       mean: [0.48145466, 0.4578275, 0.40821073]
       std: [0.26862954, 0.26130258, 0.27577711]
-#  depth_static:
-#    - _target_: torchvision.transforms.Resize
-#      size: 224
-#      interpolation: 0  # 0 corresponds to nearest neighbor interpolation
-#  depth_gripper:
-#    - _target_: torchvision.transforms.Resize
-#      size: 96
-#      interpolation: 0  # 0 corresponds to nearest neighbor interpolation
+  depth_static:
+    - _target_: torchvision.transforms.Resize
+      size: 224
+      interpolation: 0  # 0 corresponds to nearest neighbor interpolation
+  depth_gripper:
+    - _target_: torchvision.transforms.Resize
+      size: 96
+      interpolation: 0  # 0 corresponds to nearest neighbor interpolation
   robot_obs:
     - _target_: mode.utils.transforms.NormalizeVector
 
@@ -53,14 +53,14 @@ val:
     - _target_: torchvision.transforms.Normalize
       mean: [ 0.48145466, 0.4578275, 0.40821073 ]
       std: [ 0.26862954, 0.26130258, 0.27577711 ]
-#  depth_static:
-#    - _target_: torchvision.transforms.Resize
-#      size: 224
-#      interpolation: 0  # 0 corresponds to nearest neighbor interpolation
-#  depth_gripper:
-#    - _target_: torchvision.transforms.Resize
-#      size: 96
-#      interpolation: 0  # 0 corresponds to nearest neighbor interpolation
+  depth_static:
+    - _target_: torchvision.transforms.Resize
+      size: 224
+      interpolation: 0  # 0 corresponds to nearest neighbor interpolation
+  depth_gripper:
+    - _target_: torchvision.transforms.Resize
+      size: 96
+      interpolation: 0  # 0 corresponds to nearest neighbor interpolation
   robot_obs:
     - _target_: mode.utils.transforms.NormalizeVector
   scene_obs:

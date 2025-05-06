@@ -9,6 +9,12 @@ import torch
 from calvin_env.envs.play_table_env import get_env
 from calvin_env.utils.utils import EglDeviceNotFoundError, get_egl_device_id
 from mode.datasets.utils.episode_utils import process_depth, process_rgb, process_state
+from mode.utils.utils_with_calvin import (
+    keypoint_discovery,
+    deproject,
+    get_gripper_camera_view_matrix,
+    convert_rotation
+)
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +53,16 @@ class HulcWrapper(gym.Wrapper):
     def transform_observation(self, obs: Dict[str, Any]) -> Dict[str, Union[torch.Tensor, Dict[str, torch.Tensor]]]:
         state_obs = process_state(obs, self.observation_space_keys, self.transforms, self.proprio_state)
         rgb_obs = process_rgb(obs["rgb_obs"], self.observation_space_keys, self.transforms, device=self.device)
-        depth_obs = process_depth(obs["depth_obs"], self.observation_space_keys, self.transforms)
+
+        static_cam = self.env.cameras[0]
+        gripper_cam = self.env.cameras[1]
+        gripper_cam.viewMatrix = get_gripper_camera_view_matrix(gripper_cam)
+
+        depth_dict = obs["depth_obs"]
+        depth_dict['static_viewmatrix'] = np.array(static_cam.viewMatrix).reshape((4, 4))
+        depth_dict['gripper_viewmatrix'] = np.array(gripper_cam.viewMatrix).reshape((4, 4))
+
+        depth_obs = process_depth(depth_dict, self.observation_space_keys, self.transforms)
 
         state_obs["robot_obs"] = state_obs["robot_obs"].to(self.device).unsqueeze(0)
         rgb_obs.update({"rgb_obs": {k: v.to(self.device).unsqueeze(0) for k, v in rgb_obs["rgb_obs"].items()}})
