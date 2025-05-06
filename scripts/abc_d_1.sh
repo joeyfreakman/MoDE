@@ -5,4 +5,5 @@ CUDA_VISIBLE_DEVICES=4,5,6,7 python run_calvin.py --config-name=config_calvin \
             model=depth_agent \
             model/obs_encoders=convnext_pc \
             logger.group=xlstm_convnext \
+            latent_dim=768 \
             root_data_dir=/home/huang/david/MoDE/calvin/dataset/task_ABC_D
