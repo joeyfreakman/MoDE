@@ -1,11 +1,12 @@
 defaults:
   - callbacks: calvin
   - datamodule: calvin
-  - model: mode_agent
+  - model: mode_agent_pc
   - override hydra/job_logging: colorlog
   - override hydra/hydra_logging: colorlog
 
-cam_file: /home/huang/david/MoDE/mode/utils/cam_params.pkl
+cam_file: /home/hk-project-robolear/ll6323/nips25/MoDE/mode/utils/cam_params.pkl
+#cam_file: /home/huang/david/MoDE/mode/utils/cam_params.pkl
 #cam_file: /home/david/Nips2025/MoDE/mode/utils/cam_params.pkl
 
 root_data_dir: /home/david/Nips2025/MoDE/calvin/dataset/calvin_debug_dataset
