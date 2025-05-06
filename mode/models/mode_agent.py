@@ -88,7 +88,7 @@ class MoDEAgent(pl.LightningModule):
     ):
         super(MoDEAgent, self).__init__()
         # Set obs_dim based on resnet_type
-        obs_dim = 2048 if resnet_type == '50' else 512
+        obs_dim = 768 if resnet_type == '50' else 512
         self.latent_dim = latent_dim
         model.inner_model.obs_dim = obs_dim
         self.model = hydra.utils.instantiate(model).to(self.device)
