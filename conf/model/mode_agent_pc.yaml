@@ -1,4 +1,4 @@
-_target_: mode.models.mode_agent.MoDEAgent
+_target_: mode.models.mode_agent_pc.MoDEAgent
 _recursive_: false
 multistep: ${multistep}
 use_lr_scheduler: False
