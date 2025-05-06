@@ -21,8 +21,6 @@ obs_enc_dim: ${obs_dim}
 cond_dim: 512
 resnet_type: '50'
 
-cam_file: ${cam_file}
-
 optimizer:
   _target_: torch.optim.AdamW
   transformer_weight_decay: 0.05
@@ -49,7 +47,7 @@ model:
     _target_: mode.models.networks.modedit.MoDeDiT
     action_dim: ${datamodule.action_space}
     goal_dim: ${model.cond_dim}
-    obs_dim: 768
+    obs_dim: 2048
     goal_conditioned: True
     causal: True
     use_custom_attn_mask: False
