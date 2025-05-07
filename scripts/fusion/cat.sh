@@ -34,6 +34,7 @@ srun python run_calvin.py --config-name=config_calvin \
             devices=4 \
             model=depth_agent \
             model/obs_encoders=conv_rgb_pc_cat \
+            model.use_lr_scheduler=True \
             logger.group=xlstm_rgb_pc_cat \
             obs_tokens=4 \
             xlstm_encoder_vocab_size=16 \

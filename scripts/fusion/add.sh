@@ -34,6 +34,7 @@ srun python run_calvin.py --config-name=config_calvin \
             devices=4 \
             model=depth_agent \
             model/obs_encoders=conv_rgb_pc_add \
+            model.use_lr_scheduler=True \
             logger.group=xlstm_rgb_pc_add \
             n_embd=512 \
             cam_file=/home/hk-project-robolear/ll6323/nips25/MoDE/mode/utils/cam_params.pkl \
