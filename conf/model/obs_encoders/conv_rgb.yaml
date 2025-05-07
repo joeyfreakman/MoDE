@@ -1,0 +1,2 @@
+_target_: agents.encoders.conv_encoder.Conv_rgb
+_recursive_: false
