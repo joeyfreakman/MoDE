@@ -19,7 +19,7 @@
 
 # -------------------------------
 # Activate the virtualenv / conda environment
-conda activate mode_env
+conda activate nips25
 
 export TORCH_USE_CUDA_DSA=1
 # NNODES=1
