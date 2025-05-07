@@ -30,10 +30,11 @@ export TORCH_USE_CUDA_DSA=1
 
 srun python run_calvin.py --config-name=config_calvin \
             --multirun rollout_lh_skip_epochs=9 \
-            batch_size=256 \
+            batch_size=128 \
             devices=4 \
             model=depth_agent \
-            logger.group=xlstm_rgb_batch1024_512 \
+            model.use_lr_scheduler=True \
+            logger.group=xlstm_rgb_lr_512 \
             n_embd=512 \
             cam_file=/home/hk-project-robolear/ll6323/nips25/MoDE/mode/utils/cam_params.pkl \
             root_data_dir=/hkfs/work/workspace/scratch/ll6323-david_dataset_2/calvin/dataset/task_ABC_D
