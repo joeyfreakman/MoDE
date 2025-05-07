@@ -33,7 +33,8 @@ srun python run_calvin.py --config-name=config_calvin \
             batch_size=128 \
             devices=4 \
             model=depth_agent \
-            logger.group=xlstm_rgb \
+            logger.group=xlstm_rgb_1024 \
+            n_embd=1024 \
             cam_file=/home/hk-project-robolear/ll6323/nips25/MoDE/mode/utils/cam_params.pkl \
             root_data_dir=/hkfs/work/workspace/scratch/ll6323-david_dataset_2/calvin/dataset/task_ABC_D
 # batch_size=2 model=smolflow_agent # batch_size=4 model.use_lora=False # model=vlm_berg_agent # batch_size=2 model.vla_mode='reduced_head' #model.use_perceiver=False model.use_incontext=True #seed=242 #model=mode_agent
