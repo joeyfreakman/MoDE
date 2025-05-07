@@ -1,2 +1,4 @@
 _target_: agents.encoders.conv_encoder.Conv_pc
 _recursive_: false
+
+pretrained: True

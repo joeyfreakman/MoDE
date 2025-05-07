@@ -66,22 +66,44 @@ class Conv_rgb(nn.Module):
 
 
 class Conv_pc(nn.Module):
-    def __init__(self,):
+    def __init__(self, pretrained=False):
         super(Conv_pc, self).__init__()
 
         # self.pc_static = ConvNextv2(pretrained=False)
         # self.pc_gripper = ConvNextv2(pretrained=False)
 
-        self.pc_static = FiLMResNet50Policy(condition_dim=512, pretrained=False)
-        self.pc_gripper = FiLMResNet50Policy(condition_dim=512, pretrained=False)
+        self.pc_static = FiLMResNet50Policy(condition_dim=512, pretrained=pretrained)
+        self.pc_gripper = FiLMResNet50Policy(condition_dim=512, pretrained=pretrained)
+
+        self.pretrained = pretrained
+
+        if pretrained:
+            # Add a learnable preprocessing layer to adapt xyz to a more RGB-like distribution
+            self.preprocessing_static = nn.Sequential(
+                nn.Conv2d(3, 3, kernel_size=1, stride=1, padding=0, bias=True),
+                nn.BatchNorm2d(3),
+                nn.ReLU()
+            )
+            self.preprocessing_gripper = nn.Sequential(
+                nn.Conv2d(3, 3, kernel_size=1, stride=1, padding=0, bias=True),
+                nn.BatchNorm2d(3),
+                nn.ReLU()
+            )
 
     # For point clouds of each camera view, first 3 dimensions stand for xyz, other 3 dimensions stand for rgb
     def forward(self, x):
 
         lang_emb = x['latent_goal']
 
-        static_tokens = self.pc_static(x['pc_static'], lang_emb)
-        gripper_tokens = self.pc_gripper(x['pc_gripper'], lang_emb)
+        if self.pretrained:
+            static_inputs = self.preprocessing_static(x['pc_static'])
+            gripper_inputs = self.preprocessing_gripper(x['pc_gripper'])
+        else:
+            static_inputs = x['pc_static']
+            gripper_inputs = x['pc_gripper']
+
+        static_tokens = self.pc_static(static_inputs, lang_emb)
+        gripper_tokens = self.pc_gripper(gripper_inputs, lang_emb)
 
         cam_features = torch.stack([static_tokens, gripper_tokens], dim=1)
 
