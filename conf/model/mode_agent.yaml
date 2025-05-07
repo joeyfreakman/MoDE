@@ -7,7 +7,7 @@ router_z_delta: 0.00
 use_proprio: False
 seed: ${seed}
 sampler_type: 'ddim'
-num_sampling_steps: 10
+num_sampling_steps: 5
 sigma_data: 0.5
 sigma_min: 0.001
 sigma_max: 80
