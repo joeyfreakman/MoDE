@@ -125,6 +125,17 @@ class Dec_only(nn.Module):
         return pred_actions
 
 
+# SwishGLU -- A Gated Linear Unit (GLU) with the Swish activation; always better than GELU MLP!
+class SwishGLU(nn.Module):
+    def __init__(self, in_dim: int, out_dim: int) -> None:
+        super().__init__()
+        self.act, self.project = nn.SiLU(), nn.Linear(in_dim, 2 * out_dim)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        projected, gate = self.project(x).tensor_split(2, dim=-1)
+        return projected * self.act(gate)
+
+
 # Diffusion based decoder-only model, we need time embedding and noisy antions inputs here
 class Noise_Dec_only(nn.Module):
     def __init__(
@@ -167,6 +178,12 @@ class Noise_Dec_only(nn.Module):
 
         # linear embedding for the action
         self.action_emb = nn.Linear(action_dim, embed_dim)
+
+        self.cond_layer = nn.Sequential(
+            SwishGLU(2 * embed_dim, 2 * embed_dim),
+            nn.Linear(2 * embed_dim, embed_dim, bias=False),
+            nn.Dropout(0.1)
+        )
 
         self.diffusion_type = diffusion_type
 
@@ -263,7 +280,9 @@ class Noise_Dec_only(nn.Module):
             input_seq = torch.cat([emb_t, state_x, action_x], dim=1)
 
         if self.use_ada_conditioning:
-            encoder_output = self.encoder(input_seq, emb_t)
+            cond = torch.cat([emb_t, goal_embed], dim=-1)
+            cond = self.cond_layer(cond)
+            encoder_output = self.encoder(input_seq, cond)
         else:
             encoder_output = self.encoder(input_seq)
 

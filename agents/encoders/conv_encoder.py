@@ -9,11 +9,11 @@ class Conv_pc_rgb(nn.Module):
     def __init__(self, fuse_type='add'):
         super(Conv_pc_rgb, self).__init__()
 
-        self.pc_static = ConvNextv2(pretrained=False)
-        self.pc_gripper = ConvNextv2(pretrained=False)
+        # self.pc_static = ConvNextv2(pretrained=False)
+        # self.pc_gripper = ConvNextv2(pretrained=False)
 
-        # self.pc_static = FiLMResNet50Policy(condition_dim=512, pretrained=True)
-        # self.pc_gripper = FiLMResNet50Policy(condition_dim=512, pretrained=True)
+        self.pc_static = FiLMResNet50Policy(condition_dim=512, pretrained=False)
+        self.pc_gripper = FiLMResNet50Policy(condition_dim=512, pretrained=False)
 
         # Add a learnable preprocessing layer to adapt xyz to a more RGB-like distribution
         # self.preprocessing_static = nn.Sequential(
@@ -43,8 +43,8 @@ class Conv_pc_rgb(nn.Module):
         # static_inputs = self.preprocessing_static(x['pc_static'])
         # gripper_inputs = self.preprocessing_gripper(x['pc_gripper'])
 
-        pc_static_tokens = self.pc_static(x['pc_static'])
-        pc_gripper_tokens = self.pc_gripper(x['pc_gripper'])
+        pc_static_tokens = self.pc_static(x['pc_static'], lang_emb)
+        pc_gripper_tokens = self.pc_gripper(x['pc_gripper'], lang_emb)
 
         if self.fuse_type == 'add':
 
