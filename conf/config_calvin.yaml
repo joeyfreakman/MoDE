@@ -32,7 +32,7 @@ gen_img_res: 112
 max_epochs: 25
 rollout_lh_skip_epochs: 9
 num_workers: 12
-benchmark_name: calvin_abc # calvin_abcd
+benchmark_name: nips_calvin # calvin_abcd
 use_extracted_rel_actions: true
 
 ##########################################################################################
@@ -60,8 +60,8 @@ n_heads: 8
 ##########################################################################################
 xlstm_encoder_blocks: 10
 xlstm_encoder_vocab_size: 140
-xlstm_encoder_chunkwise_kernel: "chunkwise--native_autograd"   # "parallel--native_autograd" "chunkwise--native_autograd"
-xlstm_encoder_mode: "train_with_padding"  # "train" "train_with_padding"
+xlstm_encoder_chunkwise_kernel: "parallel--native_autograd"   # "parallel--native_autograd" "chunkwise--native_autograd"
+xlstm_encoder_mode: "train"  # "train" "train_with_padding"
 xlstm_encoder_adaLN_zero: False
 xlstm_encoder_in_context_cond: False
 
