@@ -7,7 +7,7 @@
 # Cluster Settings
 #SBATCH -n 4       # Number of tasks
 #SBATCH -c 16  # Number of cores per task
-#SBATCH -t 1000 ## 1-00:30:00 # 06:00:00 # 1-00:30:00 # 2-00:00:00
+#SBATCH -t 400 ## 1-00:30:00 # 06:00:00 # 1-00:30:00 # 2-00:00:00
 #SBATCH --gres=gpu:4
 #SBATCH --ntasks-per-node=4
 
@@ -37,7 +37,7 @@ srun python run_calvin.py --config-name=config_calvin \
             model.use_lr_scheduler=True \
             logger.group=cat_512_act20 \
             obs_tokens=4 \
-            xlstm_encoder_vocab_size=16 \
+            xlstm_encoder_vocab_size=26 \
             n_embd=512 \
             act_seq_len=20 \
             multistep=20 \
