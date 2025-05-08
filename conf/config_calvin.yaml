@@ -40,9 +40,9 @@ use_extracted_rel_actions: true
 ##########################################################################################
 n_embd: 512
 goal_dim: 512
-latent_dim: 768
+latent_dim: 2048
 
-obs_tokens: 2 #${obs_seq_len}
+obs_tokens: 120 #${obs_seq_len}
 use_pos_emb: True
 num_sampling_steps: 10
 goal_conditioned: True
@@ -59,9 +59,9 @@ n_heads: 8
 # xLSTM Parameters
 ##########################################################################################
 xlstm_encoder_blocks: 10
-xlstm_encoder_vocab_size: 14
-xlstm_encoder_chunkwise_kernel: "parallel--native_autograd"   # "parallel--native_autograd" "chunkwise--native_autograd"
-xlstm_encoder_mode: "train"  # "train" "train_with_padding"
+xlstm_encoder_vocab_size: 140
+xlstm_encoder_chunkwise_kernel: "chunkwise--native_autograd"   # "parallel--native_autograd" "chunkwise--native_autograd"
+xlstm_encoder_mode: "train_with_padding"  # "train" "train_with_padding"
 xlstm_encoder_adaLN_zero: False
 xlstm_encoder_in_context_cond: False
 

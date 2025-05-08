@@ -63,6 +63,48 @@ class FiLMResNet50Policy(nn.Module):
         return x  # Return the latent features directly
 
 
+class FiLMResNet50Policy_Local(nn.Module):
+    def __init__(self, condition_dim, pretrained):
+        super(FiLMResNet50Policy_Local, self).__init__()
+        # Load pretrained ResNet50 with weights from ImageNet-1K
+        self.resnet = create_model('resnet50', pretrained=pretrained, num_classes=0)
+
+        # Add FiLM layers after each residual block
+        self.film1 = FiLMLayer(256, condition_dim)
+        self.film2 = FiLMLayer(512, condition_dim)
+        self.film3 = FiLMLayer(1024, condition_dim)
+        self.film4 = FiLMLayer(2048, condition_dim)
+
+    def forward(self, x, condition):
+        if len(condition.shape) == 3:
+            condition = condition.squeeze(1)
+        x = self.resnet.conv1(x)
+        x = self.resnet.bn1(x)
+        x = self.resnet.act1(x)
+        x = self.resnet.maxpool(x)
+
+        x = self.resnet.layer1(x)
+        x = self.film1(x, condition)
+
+        x = self.resnet.layer2(x)
+        x = self.film2(x, condition)
+
+        x = self.resnet.layer3(x)
+        x = self.film3(x, condition)
+
+        x = self.resnet.layer4(x)
+        x = self.film4(x, condition)
+
+        local_features = einops.rearrange(x, "b c h w -> b (h w) c")
+
+        x = self.resnet.global_pool(x)
+        # x = x.flatten(1)
+
+        x = einops.rearrange(x, "b c -> b 1 c")
+
+        return torch.cat([x, local_features], dim=1)  # Return the latent features directly
+
+
 class FiLMResNet34Policy(nn.Module):
     def __init__(self, condition_dim):
         super(FiLMResNet34Policy, self).__init__()
