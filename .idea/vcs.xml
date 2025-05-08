@@ -5,5 +5,6 @@
     <mapping directory="$PROJECT_DIR$/LIBERO" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/calvin" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/calvin_env" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/calvin_env/tacto" vcs="Git" />
   </component>
 </project>

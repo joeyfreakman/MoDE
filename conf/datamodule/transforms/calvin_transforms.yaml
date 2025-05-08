@@ -27,9 +27,8 @@ train:
     - _target_: torchvision.transforms.Resize
       size: 96
       interpolation: 0  # 0 corresponds to nearest neighbor interpolation
-  robot_obs:
-    - _target_: mode.utils.transforms.NormalizeVector
-
+#  robot_obs:
+#    - _target_: mode.utils.transforms.NormalizeVector
   scene_obs:
     - _target_: mode.utils.transforms.NormalizeVector
 
@@ -61,7 +60,7 @@ val:
     - _target_: torchvision.transforms.Resize
       size: 96
       interpolation: 0  # 0 corresponds to nearest neighbor interpolation
-  robot_obs:
-    - _target_: mode.utils.transforms.NormalizeVector
+#  robot_obs:
+#    - _target_: mode.utils.transforms.NormalizeVector
   scene_obs:
     - _target_: mode.utils.transforms.NormalizeVector

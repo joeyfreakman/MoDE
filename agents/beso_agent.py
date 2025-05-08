@@ -63,7 +63,7 @@ class BesoAgent(pl.LightningModule):
         # Initialize model and encoder
         self.img_encoder = hydra.utils.instantiate(obs_encoders)
         self.language_encoder = hydra.utils.instantiate(language_encoders)
-        self.state_emb = nn.Linear(state_dim, latent_dim)
+        self.state_emb = nn.Linear(7, latent_dim)
 
         # for inference
         self.rollout_step_counter = 0
@@ -253,7 +253,9 @@ class BesoAgent(pl.LightningModule):
         perceptual_emb = self.img_encoder(obs_dict)
 
         if self.if_robot_states:
-            perceptual_emb['robot_obs'] = dataset_batch['robot_obs']
+            state_emb = self.state_emb(dataset_batch['robot_obs'])
+
+            perceptual_emb = torch.cat((perceptual_emb, state_emb), dim=1)
 
         return perceptual_emb, latent_goal
 
