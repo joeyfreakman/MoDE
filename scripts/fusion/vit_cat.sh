@@ -30,7 +30,7 @@ export TORCH_USE_CUDA_DSA=1
 
 srun python run_calvin.py --config-name=config_calvin \
             --multirun rollout_lh_skip_epochs=9 \
-            batch_size=128 \
+            batch_size=96 \
             devices=4 \
             model=depth_agent \
             model/obs_encoders=davit_pc_rgb \
