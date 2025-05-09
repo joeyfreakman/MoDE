@@ -92,6 +92,28 @@ class Davit_rgb(nn.Module):
         return cam_features
 
 
+class Davit_pc(nn.Module):
+    def __init__(self,):
+        super(Davit_pc, self).__init__()
+
+        self.pc_encoder = DaViTFeatureExtractor(model_name='davit_tiny', pretrained=False)
+
+        # self.pc_static = DaViTFeatureExtractor(model_name='davit_tiny', pretrained=True)
+        # self.pc_gripper = DaViTFeatureExtractor(model_name='davit_tiny', pretrained=True)
+
+    # For point clouds of each camera view, first 3 dimensions stand for xyz, other 3 dimensions stand for rgb
+    def forward(self, x):
+
+        lang_emb = x['latent_goal']
+
+        static_tokens = self.pc_encoder(x['pc_static'])
+        gripper_tokens = self.pc_encoder(x['pc_gripper'])
+
+        cam_features = torch.stack([static_tokens, gripper_tokens], dim=1)
+
+        return cam_features
+
+
 class Davit_pc_rgb(nn.Module):
     def __init__(self,):
         super(Davit_pc_rgb, self).__init__()

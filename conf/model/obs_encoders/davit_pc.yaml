@@ -1,0 +1,2 @@
+_target_: agents.encoders.vit_encoder.Davit_pc
+_recursive_: false
