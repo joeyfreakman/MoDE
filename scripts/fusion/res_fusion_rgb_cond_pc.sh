@@ -1,4 +1,4 @@
-CUDA_VISIBLE_DEVICES=4,5,6,7 python run_calvin.py --config-name=config_calvin \
+CUDA_VISIBLE_DEVICES=0,1,2,3 python run_calvin.py --config-name=config_calvin \
             --multirun rollout_lh_skip_epochs=9 \
             batch_size=128 \
             devices=4 \
@@ -6,8 +6,8 @@ CUDA_VISIBLE_DEVICES=4,5,6,7 python run_calvin.py --config-name=config_calvin \
             model/obs_encoders=res_fusion_rgb_cond_pc \
             model.use_lr_scheduler=True \
             logger.group=res_fusion_rgb_cond_pc \
-            obs_tokens=4 \
-            xlstm_encoder_vocab_size=16 \
+            obs_tokens=2 \
+            xlstm_encoder_vocab_size=14 \
             n_embd=512 \
             act_seq_len=10 \
             multistep=10 \

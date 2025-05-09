@@ -133,6 +133,6 @@ class Res_fusion(nn.Module):
             static_tokens = self.rgb_static(x['rgb_static'], pc_static_tokens)
             gripper_tokens = self.rgb_gripper(x['rgb_gripper'], pc_gripper_tokens)
 
-            cam_features = torch.stack([static_tokens, pc_static_tokens, gripper_tokens, pc_gripper_tokens], dim=1)
+            cam_features = torch.stack([static_tokens, gripper_tokens], dim=1)
 
         return cam_features
