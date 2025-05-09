@@ -104,6 +104,13 @@ class Res_fusion(nn.Module):
             self.rgb_static = FiLMResNet50Policy(condition_dim=512, pretrained=True)
             self.rgb_gripper = FiLMResNet50Policy(condition_dim=512, pretrained=True)
 
+        elif fuse_type == 'rgb_cond_pc':
+            self.pc_static = FiLMResNet50Policy(condition_dim=512, pretrained=False)
+            self.pc_gripper = FiLMResNet50Policy(condition_dim=512, pretrained=False)
+
+            self.rgb_static = FiLMResNet50Policy(condition_dim=2048, pretrained=True)
+            self.rgb_gripper = FiLMResNet50Policy(condition_dim=2048, pretrained=True)
+
     # For point clouds of each camera view, first 3 dimensions stand for xyz, other 3 dimensions stand for rgb
     def forward(self, x):
 
@@ -116,6 +123,15 @@ class Res_fusion(nn.Module):
 
             pc_static_tokens = self.pc_static(x['pc_static'], static_tokens)
             pc_gripper_tokens = self.pc_gripper(x['pc_gripper'], gripper_tokens)
+
+            cam_features = torch.stack([static_tokens, pc_static_tokens, gripper_tokens, pc_gripper_tokens], dim=1)
+
+        elif self.fuse_type == 'rgb_cond_pc':
+            pc_static_tokens = self.pc_static(x['pc_static'], lang_emb)
+            pc_gripper_tokens = self.pc_gripper(x['pc_gripper'], lang_emb)
+
+            static_tokens = self.rgb_static(x['rgb_static'], pc_static_tokens)
+            gripper_tokens = self.rgb_gripper(x['rgb_gripper'], pc_gripper_tokens)
 
             cam_features = torch.stack([static_tokens, pc_static_tokens, gripper_tokens, pc_gripper_tokens], dim=1)
 
