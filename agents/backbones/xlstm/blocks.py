@@ -135,8 +135,11 @@ class xLSTMBlockStack(nn.Module):
         self.adaLN_zero = adaLN_zero
 
         if adaLN_zero:
+            # self.blocks = nn.ModuleList(
+            #     [ConditionedmLSTMBlock(config) for _ in range(config.num_blocks)]
+            # )
             self.blocks = nn.ModuleList(
-                [ConditionedmLSTMBlock(config) for _ in range(config.num_blocks)]
+                [mLSTMBlock(config) for _ in range(config.num_blocks)]
             )
         else:
             self.blocks = nn.ModuleList(
@@ -170,7 +173,9 @@ class xLSTMBlockStack(nn.Module):
             block_state = state[i]
 
             if self.adaLN_zero:
-                x = block(x, block_state, cond)
+                x = x + cond
+                x = block(x, block_state)
+                # x = block(x, block_state, cond)
             else:
                 if self.in_context_cond:
                     x = block(x, block_state)

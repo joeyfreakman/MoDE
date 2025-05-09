@@ -280,8 +280,9 @@ class Noise_Dec_only(nn.Module):
             input_seq = torch.cat([emb_t, state_x, action_x], dim=1)
 
         if self.use_ada_conditioning:
-            cond = torch.cat([emb_t, goal_embed], dim=-1)
-            cond = self.cond_layer(cond)
+            # cond = torch.cat([emb_t, goal_embed], dim=-1)
+            # cond = self.cond_layer(cond)
+            cond = goal_embed
             encoder_output = self.encoder(input_seq, cond)
         else:
             encoder_output = self.encoder(input_seq)
