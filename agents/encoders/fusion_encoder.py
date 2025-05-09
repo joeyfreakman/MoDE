@@ -89,3 +89,34 @@ class Conv_fusion(nn.Module):
 
         return cam_features
 
+
+class Res_fusion(nn.Module):
+    def __init__(self, fuse_type=None):
+        super(Res_fusion, self).__init__()
+
+        self.fuse_type = fuse_type
+
+        if fuse_type == 'pc_cond_rgb':
+
+            self.pc_static = FiLMResNet50Policy(condition_dim=2048, pretrained=False)
+            self.pc_gripper = FiLMResNet50Policy(condition_dim=2048, pretrained=False)
+
+            self.rgb_static = FiLMResNet50Policy(condition_dim=512, pretrained=True)
+            self.rgb_gripper = FiLMResNet50Policy(condition_dim=512, pretrained=True)
+
+    # For point clouds of each camera view, first 3 dimensions stand for xyz, other 3 dimensions stand for rgb
+    def forward(self, x):
+
+        lang_emb = x['latent_goal']
+
+        if self.fuse_type == 'pc_cond_rgb':
+
+            static_tokens = self.rgb_static(x['rgb_static'], lang_emb)
+            gripper_tokens = self.rgb_gripper(x['rgb_gripper'], lang_emb)
+
+            pc_static_tokens = self.pc_static(x['pc_static'], static_tokens)
+            pc_gripper_tokens = self.pc_gripper(x['pc_gripper'], gripper_tokens)
+
+            cam_features = torch.stack([static_tokens, pc_static_tokens, gripper_tokens, pc_gripper_tokens], dim=1)
+
+        return cam_features

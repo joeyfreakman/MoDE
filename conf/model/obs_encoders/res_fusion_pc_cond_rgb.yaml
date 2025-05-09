@@ -1,0 +1,4 @@
+_target_: agents.encoders.fusion_encoder.Res_fusion
+_recursive_: false
+
+fuse_type: 'pc_cond_rgb'
