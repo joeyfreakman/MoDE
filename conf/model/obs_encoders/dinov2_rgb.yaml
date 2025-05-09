@@ -1,0 +1,2 @@
+_target_: agents.encoders.vit_encoder.Dinov2_rgb
+_recursive_: false
