@@ -1,0 +1,4 @@
+_target_: agents.encoders.fusion_encoder.Conv_fusion
+_recursive_: false
+
+fuse_type: 'cross_cond'
