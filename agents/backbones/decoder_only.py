@@ -239,7 +239,10 @@ class Noise_Dec_only(nn.Module):
             torch.nn.init.zeros_(module.bias)
             torch.nn.init.ones_(module.weight)
         elif isinstance(module, Noise_Dec_only):
-            torch.nn.init.normal_(module.pos_emb, mean=0.0, std=0.02)
+            if self.use_pos_emb:
+                torch.nn.init.normal_(module.pos_emb, mean=0.0, std=0.02)
+            else:
+                pass
 
     def forward(
             self,
