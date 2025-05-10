@@ -27,7 +27,7 @@ inner_model:
   encoder:
     _target_: agents.backbones.xlstm.blocks.xLSTMBlockStack
     embedding_dim: ${n_embd}
-    num_heads: 8
+    num_heads: ${xlstm_heads}
     num_blocks: ${xlstm_encoder_blocks}
     vocab_size: ${xlstm_encoder_vocab_size}
     chunkwise_kernel: ${xlstm_encoder_chunkwise_kernel}

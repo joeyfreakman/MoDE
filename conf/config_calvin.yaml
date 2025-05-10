@@ -76,6 +76,7 @@ xlstm_encoder_chunkwise_kernel: "parallel--native_autograd"   # "parallel--nativ
 xlstm_encoder_mode: "train"  # "train" "train_with_padding"
 xlstm_encoder_adaLN_zero: False
 xlstm_encoder_in_context_cond: False
+xlstm_heads: 8
 
 trainer:
   devices: ${devices}
