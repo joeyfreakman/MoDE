@@ -1,0 +1,4 @@
+_target_: agents.encoders.conv_encoder.Conv_pc_rgb_pretrained
+_recursive_: false
+
+fuse_type: 'cat'
