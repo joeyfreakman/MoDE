@@ -178,18 +178,6 @@ class Convnext_pc(nn.Module):
 
         return cam_features
 
-
-# SwishGLU -- A Gated Linear Unit (GLU) with the Swish activation; always better than GELU MLP!
-class SwishGLU(nn.Module):
-    def __init__(self, in_dim: int, out_dim: int) -> None:
-        super().__init__()
-        self.act, self.project = nn.SiLU(), nn.Linear(in_dim, 2 * out_dim)
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        projected, gate = self.project(x).tensor_split(2, dim=-1)
-        return projected * self.act(gate)
-
-
 class Conv_pc_rgb_pretrained(nn.Module):
     def __init__(self, fuse_type='add'):
         super(Conv_pc_rgb_pretrained, self).__init__()
@@ -230,5 +218,75 @@ class Conv_pc_rgb_pretrained(nn.Module):
         elif self.fuse_type == 'cat':
 
             cam_features = torch.stack([static_tokens, pc_static_tokens, gripper_tokens, pc_gripper_tokens], dim=1)
+
+        return cam_features
+
+
+# SwishGLU -- A Gated Linear Unit (GLU) with the Swish activation; always better than GELU MLP!
+class SwishGLU(nn.Module):
+    def __init__(self, in_dim: int, out_dim: int) -> None:
+        super().__init__()
+        self.act, self.project = nn.SiLU(), nn.Linear(in_dim, 2 * out_dim)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        projected, gate = self.project(x).tensor_split(2, dim=-1)
+        return projected * self.act(gate)
+
+
+class Conv_cat_dim(nn.Module):
+    def __init__(self):
+        super(Conv_cat_dim, self).__init__()
+
+        self.pc_static = FiLMResNet50Policy(condition_dim=512, pretrained=False)
+        self.pc_gripper = FiLMResNet50Policy(condition_dim=512, pretrained=False)
+
+        in_dim = 2048
+        out_dim = 1024
+
+        self.pc_static_mlp = nn.Sequential(
+            SwishGLU(in_dim, out_dim),
+            nn.Linear(out_dim, out_dim, bias=False),
+            nn.Dropout(0.1)
+        )
+
+        self.pc_gripper_mlp = nn.Sequential(
+            SwishGLU(in_dim, out_dim),
+            nn.Linear(out_dim, out_dim, bias=False),
+            nn.Dropout(0.1)
+        )
+
+        self.rgb_static_mlp = nn.Sequential(
+            SwishGLU(in_dim, out_dim),
+            nn.Linear(out_dim, out_dim, bias=False),
+            nn.Dropout(0.1)
+        )
+
+        self.rgb_gripper_mlp = nn.Sequential(
+            SwishGLU(in_dim, out_dim),
+            nn.Linear(out_dim, out_dim, bias=False),
+            nn.Dropout(0.1)
+        )
+
+        self.rgb_static = FiLMResNet50Policy(condition_dim=512, pretrained=True)
+        self.rgb_gripper = FiLMResNet50Policy(condition_dim=512, pretrained=True)
+
+    # For point clouds of each camera view, first 3 dimensions stand for xyz, other 3 dimensions stand for rgb
+    def forward(self, x):
+
+        lang_emb = x['latent_goal']
+
+        static_tokens = self.rgb_static(x['rgb_static'], lang_emb)
+        gripper_tokens = self.rgb_gripper(x['rgb_gripper'], lang_emb)
+
+        pc_static_tokens = self.pc_static(x['pc_static'], lang_emb)
+        pc_gripper_tokens = self.pc_gripper(x['pc_gripper'], lang_emb)
+
+        static_tokens = self.rgb_static_mlp(static_tokens)
+        gripper_tokens = self.rgb_gripper_mlp(gripper_tokens)
+
+        pc_static_tokens = self.pc_static_mlp(pc_static_tokens)
+        pc_gripper_tokens = self.pc_gripper_mlp(pc_gripper_tokens)
+
+        cam_features = torch.stack([torch.cat([static_tokens, pc_static_tokens], dim=-1), torch.cat([gripper_tokens, pc_gripper_tokens], dim=-1)], dim=1)
 
         return cam_features
