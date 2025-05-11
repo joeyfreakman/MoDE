@@ -10,13 +10,10 @@ class ConvNextv2(nn.Module):
 
         self.convnext = create_model('convnextv2_tiny', pretrained=pretrained, num_classes=0)
 
-        self.out = nn.Linear(768, 2048)
-
     def forward(self, x):
 
         x = self.convnext(x)
 
-        x = self.out(x)
         return x
 
 
