@@ -130,6 +130,6 @@ def example_modification(data_dict, filename, env):
 #     return data_dict
 
 # Usage
-folder_path = '/home/huang/david/MoDE/calvin/dataset/task_ABC_D/training'
+folder_path = '/home/huang/david/MoDE/calvin/dataset/task_D_D/training'
 # folder_path = "/home/david/Nips2025/MoDE/calvin/dataset/calvin_debug_dataset/training"  # Replace with your folder path
 process_npz_files(folder_path, example_modification)
