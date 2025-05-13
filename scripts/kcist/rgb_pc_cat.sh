@@ -9,6 +9,7 @@ CUDA_VISIBLE_DEVICES=4,5,6,7 python run_calvin.py --config-name=config_calvin \
             obs_tokens=4 \
             xlstm_encoder_vocab_size=16 \
             n_embd=512 \
+            latent_dim=768 \
             num_sampling_steps=4 \
             cam_file=/home/huang/david/MoDE/mode/utils/cam_params.pkl \
             root_data_dir=/home/huang/david/MoDE/calvin/dataset/task_ABC_D
