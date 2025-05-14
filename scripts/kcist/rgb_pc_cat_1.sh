@@ -1,4 +1,4 @@
-CUDA_VISIBLE_DEVICES=4,5,6,7 python run_calvin.py --config-name=config_calvin \
+CUDA_VISIBLE_DEVICES=0,1,2,3 python run_calvin.py --config-name=config_calvin \
             --multirun rollout_lh_skip_epochs=9 \
             batch_size=128 \
             devices=4 \
@@ -10,11 +10,11 @@ CUDA_VISIBLE_DEVICES=4,5,6,7 python run_calvin.py --config-name=config_calvin \
             xlstm_encoder_vocab_size=16 \
             n_embd=512 \
             num_sampling_steps=4 \
-            seed=0 \
+            seed=1 \
             cam_file=/home/huang/david/MoDE/mode/utils/cam_params.pkl \
             root_data_dir=/home/huang/david/MoDE/calvin/dataset/task_ABC_D
 
-CUDA_VISIBLE_DEVICES=4,5,6,7 python run_calvin.py --config-name=config_calvin \
+CUDA_VISIBLE_DEVICES=0,1,2,3 python run_calvin.py --config-name=config_calvin \
             --multirun rollout_lh_skip_epochs=9 \
             batch_size=128 \
             devices=4 \
@@ -26,11 +26,11 @@ CUDA_VISIBLE_DEVICES=4,5,6,7 python run_calvin.py --config-name=config_calvin \
             xlstm_encoder_vocab_size=14 \
             n_embd=512 \
             num_sampling_steps=4 \
-            seed=0 \
+            seed=1 \
             cam_file=/home/huang/david/MoDE/mode/utils/cam_params.pkl \
             root_data_dir=/home/huang/david/MoDE/calvin/dataset/task_ABC_D
 
-CUDA_VISIBLE_DEVICES=4,5,6,7 python run_calvin.py --config-name=config_calvin \
+CUDA_VISIBLE_DEVICES=0,1,2,3 python run_calvin.py --config-name=config_calvin \
             --multirun rollout_lh_skip_epochs=9 \
             batch_size=128 \
             devices=4 \
@@ -42,6 +42,6 @@ CUDA_VISIBLE_DEVICES=4,5,6,7 python run_calvin.py --config-name=config_calvin \
             xlstm_encoder_vocab_size=14 \
             n_embd=512 \
             num_sampling_steps=4 \
-            seed=0 \
+            seed=1 \
             cam_file=/home/huang/david/MoDE/mode/utils/cam_params.pkl \
             root_data_dir=/home/huang/david/MoDE/calvin/dataset/task_ABC_D

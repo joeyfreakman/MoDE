@@ -42,6 +42,9 @@ n_embd: 512
 goal_dim: 512
 latent_dim: 2048
 
+rgb_dim: 2048
+pc_dim: 768
+
 obs_tokens: 120 #${obs_seq_len}
 use_pos_emb: True
 num_sampling_steps: 10
